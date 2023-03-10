@@ -7,9 +7,9 @@ enable openvino for ai-benchmark base on intel dGPU and iGPU.
 2. [openvino-tensorflow](https://github.com/openvinotoolkit/openvino_tensorflow)
 3. [openvino](https://github.com/openvinotoolkit/openvino)
 
-## suftware version
+## software version
 1. python==3.9.16
-2. ai-benchmark==0.1.2, install from pip, extract from install path and uninstall it from python env
+2. ai-benchmark==0.1.2
 3. numpy==1.21.6, ai-benchmark ask for this version
 4. openvino_tensorflow==2.3.0
 5. tensorflow==2.9.3, openvino_tensorflow ask for this version
