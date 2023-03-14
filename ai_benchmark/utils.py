@@ -467,7 +467,7 @@ def printScores(testInfo, public_results):
         testInfo.results.ai_score = testInfo.results.inference_score + testInfo.results.training_score
         public_results.ai_score = testInfo.results.ai_score
 
-        update_info("scores", testInfo)
+        # update_info("scores", testInfo)
 
         if testInfo.verbose_level > 0:
             print("\nDevice Inference Score: " + str(testInfo.results.inference_score))
@@ -482,7 +482,7 @@ def printScores(testInfo, public_results):
 
         public_results.inference_score = testInfo.results.inference_score
 
-        update_info("scores", testInfo)
+        # update_info("scores", testInfo)
 
         if testInfo.verbose_level > 0:
             print("\nDevice Inference Score: " + str(testInfo.results.inference_score) + "\n")
@@ -495,7 +495,7 @@ def printScores(testInfo, public_results):
 
         public_results.training_score = testInfo.results.training_score
 
-        update_info("scores", testInfo)
+        # update_info("scores", testInfo)
 
         if testInfo.verbose_level > 0:
             print("\nDevice Training Score: " + str(testInfo.results.training_score) + "\n")
@@ -508,7 +508,7 @@ def printScores(testInfo, public_results):
 
         public_results.inference_score = testInfo.results.inference_score
 
-        update_info("scores", testInfo)
+        # update_info("scores", testInfo)
 
         if testInfo.verbose_level > 0:
             print("\nDevice Inference Score: " + str(testInfo.results.inference_score) + "\n")
@@ -551,14 +551,18 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
         # config = tf.compat.v1.ConfigProto()
         # config.cpu_options.
     for test in benchmark_tests:
-        t = threading.Thread(target=process_one_case, name=test.model,
-                             args=(benchmark_results, benchmark_tests, config, inference,
-                                   iter_multiplier, micro, precision, public_results,
-                                   test, testInfo, training, verbose))
-        t.start()
-        t.join()
-        time.sleep(5)
-        gc.collect()
+        # t = threading.Thread(target=process_one_case, name=test.model,
+        #                     args=(benchmark_results, benchmark_tests, config, inference,
+        #                         iter_multiplier, micro, precision, public_results,
+        #                         test, testInfo, training, verbose))
+        # t.start()
+        # t.join()
+        # time.sleep(5)
+        # gc.collect()
+
+        process_one_case(benchmark_results, benchmark_tests, config, inference,
+                                iter_multiplier, micro, precision, public_results,
+                                test, testInfo, training, verbose)
 
     testInfo.results = benchmark_results
     public_results = printScores(testInfo, public_results)
@@ -569,6 +573,20 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
 
 def process_one_case(benchmark_results, benchmark_tests, config, inference, iter_multiplier, micro, precision,
                      public_results, test, testInfo, training, verbose):
+    """
+    benchmark_results : [i/o]
+    benchmark_tests   : [i]
+    config            : [i]
+    inference         : [i] bool
+    iter_multiplier   : [i] int
+    micro             : [i] bool
+    precision         : [i] string
+    public_results    : [i/o]
+    test              : [i]
+    testInfo          : [i]
+    training          : [i] bool
+    verbose           : [i] int
+    """
     if verbose > 0 and not (micro and len(test.micro) == 0):
         print("\n" + str(test.id) + "/" + str(len(benchmark_tests)) + ". " + test.model + "\n")
     sub_id = 1
@@ -605,7 +623,8 @@ def process_one_case(benchmark_results, benchmark_tests, config, inference, iter
                         sess.run(output_, feed_dict={input_: data})
                         inference_time = getTimeMillis() - time_iter_started
                         inference_times.append(inference_time)
-
+                        del data
+                        gc.collect()
                         if verbose > 1:
                             print("Inference Time: " + str(inference_time) + " ms")
 
@@ -658,6 +677,7 @@ def process_one_case(benchmark_results, benchmark_tests, config, inference, iter
                         training_time = getTimeMillis() - time_iter_started
                         training_times.append(training_time)
 
+                        del data
                         if verbose > 1:
                             if i == 0 and inference:
                                 print("\nTraining Time: " + str(training_time) + " ms")
@@ -676,5 +696,6 @@ def process_one_case(benchmark_results, benchmark_tests, config, inference, iter
                     prefix = "%d.%d - training " % (test.id, sub_id)
                     printTestResults(prefix, subTest.batch_size, subTest.getInputDims(), time_mean, time_std, verbose)
                     sub_id += 1
-    sess.close()
-    gc.collect()
+    # sess.close()
+    # del sess
+    # gc.collect()

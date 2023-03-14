@@ -6,7 +6,7 @@ ovtf.enable()
 backends_list = ovtf.list_backends()
 for backend in backends_list:
     print("openvino backend : {}".format(backend))
-ovtf.set_backend("CPU")
+ovtf.set_backend("GPU.1")
 
 
 from ai_benchmark import AIBenchmark
