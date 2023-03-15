@@ -7,7 +7,13 @@ enable openvino for ai-benchmark base on intel dGPU and iGPU.
 2. [openvino-tensorflow](https://github.com/openvinotoolkit/openvino_tensorflow)
 3. [openvino](https://github.com/openvinotoolkit/openvino)
 
-## software version
+## env setup (common)
+1. [Ubuntu 22.04 jammy](https://cn.ubuntu.com/download)
+2. [Arc Deiver](https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-jammy-dc.html)
+3. [Miniconda](https://mirrors.bfsu.edu.cn/anaconda/miniconda/)
+4. [TsinghuaOpenSource](https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/)
+
+## env setup (for openvino_tensorflow)
 1. python==3.9.16
 2. ai-benchmark==0.1.2
 3. numpy==1.21.6, ai-benchmark ask for this version
@@ -15,6 +21,9 @@ enable openvino for ai-benchmark base on intel dGPU and iGPU.
 5. tensorflow==2.9.3, openvino_tensorflow ask for this version
 6. memory_profiler==0.61.0
 7. matplotlib==3.7.1
+
+## env setup (for oneAPI)
+1. [install itex for arc GPU](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/experimental/install_for_arc_gpu.md)
 
 ## results
 * i9-10900  CPU: avx, openvino_tensorflow
