@@ -525,15 +525,15 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
         config = None
         # config = tf.compat.v1.ConfigProto()
         # config.cpu_options.
-    idx = range(len(benchmark_tests))
-    # idx = [0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18]
+    # idx = range(len(benchmark_tests))
+    idx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18]
     for i in idx:
         test = benchmark_tests[i]
         try:
             t = threading.Thread(target=process_one_case, name=test.model,
-                                args=(benchmark_results, benchmark_tests, config, inference,
-                                    iter_multiplier, micro, precision, public_results,
-                                    test, testInfo, training, verbose))
+                                 args=(benchmark_results, benchmark_tests, config, inference,
+                                       iter_multiplier, micro, precision, public_results,
+                                       test, testInfo, training, verbose))
             t.start()
             t.join()
             time.sleep(5)
