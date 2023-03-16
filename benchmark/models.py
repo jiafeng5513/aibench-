@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019-2020 by Andrey Ignatov. All Rights Reserved.
 
-from ai_benchmark.utils import tf
-from ai_benchmark.model_utils import *
+from benchmark.utils import tf
+from benchmark.model_utils import *
 
 
 def LSTM_Sentiment(input_tensor):

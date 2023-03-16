@@ -17,9 +17,9 @@ import cpuinfo
 import time
 import os
 
-from ai_benchmark.update_utils import update_info
-from ai_benchmark.config import TestConstructor
-from ai_benchmark.models import *
+from benchmark.update_utils import update_info
+from benchmark.config import TestConstructor
+from benchmark.models import *
 import multiprocessing
 import threading
 from memory_profiler import profile
@@ -30,7 +30,6 @@ MAX_TEST_DURATION = 100
 class BenchmarkResults:
 
     def __init__(self):
-
         self.results_inference_norm = []
         self.results_training_norm = []
 
@@ -46,7 +45,6 @@ class BenchmarkResults:
 class Result:
 
     def __init__(self, mean, std):
-
         self.mean = mean
         self.std = std
 
@@ -54,7 +52,6 @@ class Result:
 class PublicResults:
 
     def __init__(self):
-
         self.test_results = {}
         self.ai_score = None
 
@@ -65,7 +62,6 @@ class PublicResults:
 class TestInfo:
 
     def __init__(self, _type, precision, use_CPU, verbose):
-
         self._type = _type
         self.tf_version = getTFVersion()
         self.tf_ver_2 = parse_version(self.tf_version) > parse_version('1.99')
@@ -92,7 +88,6 @@ def getTimeMillis():
 
 
 def resize_image(image, dimensions):
-
     image = np.asarray(image)
 
     height = image.shape[0]
@@ -120,13 +115,11 @@ def resize_image(image, dimensions):
 
 
 def loadData(test_type, dimensions):
-
     data = None
     if test_type == "classification":
 
         data = np.zeros(dimensions)
         for j in range(dimensions[0]):
-
             image = Image.open(path.join(path.dirname(__file__), "data/classification/" + str(j) + ".jpg"))
             image = resize_image(image, [dimensions[1], dimensions[2]])
             data[j] = image
@@ -158,7 +151,6 @@ def loadData(test_type, dimensions):
 
 
 def loadTargets(test_type, dimensions):
-
     data = None
     if test_type == "classification" or test_type == "nlp":
 
@@ -194,7 +186,6 @@ def loadTargets(test_type, dimensions):
 
 
 def constructOptimizer(sess, output_, target_, loss_function, optimizer, learning_rate, tf_ver_2):
-
     if loss_function == "MSE":
         loss_ = 2 * tf.nn.l2_loss(output_ - target_)
 
@@ -215,7 +206,6 @@ def constructOptimizer(sess, output_, target_, loss_function, optimizer, learnin
 
 
 def getModelSrc(test, testInfo, session):
-
     train_vars = None
 
     if testInfo.tf_ver_2 and test.use_src:
@@ -232,8 +222,8 @@ def getModelSrc(test, testInfo, session):
 
         target_ = tf.compat.v1.placeholder(tf.float32, test.training[0].getOutputDims())
 
-        train_step_ = constructOptimizer(session, output_, target_,  test.training[0].loss_function,
-                                        test.training[0].optimizer,  test.training[0].learning_rate, testInfo.tf_ver_2)
+        train_step_ = constructOptimizer(session, output_, target_, test.training[0].loss_function,
+                                         test.training[0].optimizer, test.training[0].learning_rate, testInfo.tf_ver_2)
 
         train_vars = [target_, train_step_]
 
@@ -259,19 +249,18 @@ def computeStats(results):
 
 
 def printTestResults(prefix, batch_size, dimensions, mean, std, verbose):
-
     if verbose > 1:
         prefix = "\n" + prefix
 
     if std > 1 and mean > 100:
 
         prt_str = "%s | batch=%d, size=%dx%d: %.d ± %.d ms" % (prefix, batch_size, dimensions[1], dimensions[2],
-                                                                   round(mean), round(std))
+                                                               round(mean), round(std))
 
     else:
 
         prt_str = "%s | batch=%d, size=%dx%d: %.1f ± %.1f ms" % (prefix, batch_size, dimensions[1],
-                                                                     dimensions[2], mean, std)
+                                                                 dimensions[2], mean, std)
 
     try:
         print(prt_str)
@@ -281,7 +270,6 @@ def printTestResults(prefix, batch_size, dimensions, mean, std, verbose):
 
 
 def printIntro():
-
     print("\n>>   AI-Benchmark-v.0.1.2   ")
     print(">>   Let the AI Games begin..\n")
 
@@ -290,7 +278,6 @@ def printIntro():
 
 
 def printTestInfo(testInfo):
-
     print("*  TF Version: " + testInfo.tf_version)
     print("*  Platform: " + testInfo.platform_info)
     print("*  CPU: " + testInfo.cpu_model)
@@ -311,7 +298,6 @@ def printTestInfo(testInfo):
 
 
 def getTFVersion():
-
     tf_version = "N/A"
 
     try:
@@ -323,7 +309,6 @@ def getTFVersion():
 
 
 def getPlatformInfo():
-
     platform_info = "N/A"
 
     try:
@@ -335,7 +320,6 @@ def getPlatformInfo():
 
 
 def getCpuModel():
-
     cpu_model = "N/A"
 
     try:
@@ -347,7 +331,6 @@ def getCpuModel():
 
 
 def getNumCpuCores():
-
     cpu_cores = -1
 
     try:
@@ -355,11 +338,10 @@ def getNumCpuCores():
     except:
         pass
 
-    return  cpu_cores
+    return cpu_cores
 
 
 def getCpuRAM():
-
     pc_ram = "N/A"
 
     try:
@@ -371,7 +353,6 @@ def getCpuRAM():
 
 
 def isCPUBuild():
-
     is_cpu_build = True
 
     try:
@@ -384,7 +365,6 @@ def isCPUBuild():
 
 
 def getGpuModels():
-
     gpu_models = [["N/A", "N/A"]]
     gpu_id = 0
 
@@ -401,7 +381,7 @@ def getGpuModels():
             tf_gpus = tf_gpus[tf_gpus.find('memory_limit:'):]
             gpu_ram = tf_gpus[:tf_gpus.find("\n")]
 
-            gpu_ram = int(gpu_ram.split(" ")[1]) / (1024.**3)
+            gpu_ram = int(gpu_ram.split(" ")[1]) / (1024. ** 3)
             gpu_ram = str(round(gpu_ram * 10) / 10)
 
             tf_gpus = tf_gpus[tf_gpus.find('physical_device_desc:'):]
@@ -422,12 +402,11 @@ def getGpuModels():
 
 
 def getCudaInfo():
-
     cuda_version = "N/A"
     cuda_build = "N/A"
 
     try:
-        cuda_info = str(subprocess.check_output(["nvcc",  "--version"]))
+        cuda_info = str(subprocess.check_output(["nvcc", "--version"]))
         cuda_info = cuda_info[cuda_info.find("release"):]
         cuda_version = cuda_info[cuda_info.find(" ") + 1:cuda_info.find(",")]
         cuda_build = cuda_info[cuda_info.find(",") + 2:cuda_info.find("\\")]
@@ -438,7 +417,6 @@ def getCudaInfo():
 
 
 def printTestStart():
-
     time.sleep(1)
     print("\nThe benchmark is running...")
     time.sleep(1.7)
@@ -449,7 +427,6 @@ def printTestStart():
 
 
 def printScores(testInfo, public_results):
-
     c_inference = 10000
     c_training = 10000
 
@@ -518,14 +495,12 @@ def printScores(testInfo, public_results):
 
 
 def geometrical_mean(results):
-
     results = np.asarray(results)
     return results.prod() ** (1.0 / len(results))
 
 
 @profile
 def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, start_dir):
-
     testInfo = TestInfo(_type, precision, use_CPU, verbose)
 
     if verbose > 0:
@@ -550,7 +525,10 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
         config = None
         # config = tf.compat.v1.ConfigProto()
         # config.cpu_options.
-    for test in benchmark_tests:
+    # idx = range(len(benchmark_tests))
+    idx = [0,1,2,3,4,5,6,7,8,9,10,11,12,14,15,16,17,18]
+    for i in idx:
+        test = benchmark_tests[i]
         # t = threading.Thread(target=process_one_case, name=test.model,
         #                     args=(benchmark_results, benchmark_tests, config, inference,
         #                         iter_multiplier, micro, precision, public_results,
@@ -559,10 +537,12 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
         # t.join()
         # time.sleep(5)
         # gc.collect()
-
-        process_one_case(benchmark_results, benchmark_tests, config, inference,
-                                iter_multiplier, micro, precision, public_results,
-                                test, testInfo, training, verbose)
+        try:
+            process_one_case(benchmark_results, benchmark_tests, config, inference,
+                             iter_multiplier, micro, precision, public_results,
+                             test, testInfo, training, verbose)
+        except:
+            print("error on {}/{}. {}".format(test.id, len(benchmark_tests), test.model))
 
     testInfo.results = benchmark_results
     public_results = printScores(testInfo, public_results)

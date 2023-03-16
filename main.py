@@ -9,7 +9,7 @@ for backend in backends_list:
 ovtf.set_backend("GPU.1")
 
 
-from ai_benchmark import AIBenchmark
+from benchmark import AIBenchmark
 benchmark = AIBenchmark(verbose_level=2)
 results = benchmark.run()
 
