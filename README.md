@@ -64,7 +64,7 @@ enable openvino for ai-benchmark base on intel dGPU and iGPU.
 |                           | training  batch=15, size=128x128   | 6364 ± 5 ms               | 12817 ± 168 ms          | 1500 ± 30 ms   | 166 ± 2 ms     |
 | 12/19. U-Net              | inference batch=4,  size=512x512   | 7310 ± 6012 ms            | 14069 ± 5021 ms         | 745 ± 3 ms     | 259.4 ± 0.8 ms |
 |                           | inference batch=1,  size=1024x1024 | 3891 ± 7 ms               | 11783 ± 133 ms          | 1732 ± 3 ms    | 274.8 ± 0.7 ms |
-|                           | training                           | error                     | error                   | 2547 ± 24 ms   | 216 ± 10 ms    |
+|                           | training  batch=4, size=256x25     | error                     | error                   | 2547 ± 24 ms   | 216 ± 10 ms    |
 | 13/19. Nvidia-SPADE       | inference batch=5,  size=128x128   | 1750 ± 1651 ms            | 6419 ± 2376 ms          | 582 ± 2 ms     | error          |
 |                           | training  batch=1,  size=128x128   | 1759 ± 64 ms              | 2052 ± 62 ms            | 1071 ± 41 ms   | error          |
 | 14/19. ICNet              | inference batch=5,  size=1024x1536 | 1377 ± 645 ms             | 1900 ± 554 ms           | 654 ± 8 ms     | 95.0 ± 27.9 ms |
