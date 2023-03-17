@@ -75,9 +75,18 @@ class AIBenchmark:
         return run_tests(training=False, inference=False, micro=True, verbose=self.verbose,
                          use_CPU=self.use_CPU, precision=precision, _type="micro", start_dir=self.cwd)
 
+    def run_single_case(self, case_id, json_filename, precision="normal"):
+        run_a_single_tests(training=True, inference=True, micro=False, verbose=self.verbose,
+                           use_CPU=self.use_CPU, precision=precision, _type="full", start_dir=self.cwd,
+                           test_case_id=case_id, json_file_name=json_filename)
+        return None
+
+    def get_result(self, json_filename, precision="normal"):
+        return get_score_from_json(_type="full", precision=precision, use_CPU=self.use_CPU,
+                                   verbose=self.verbose, start_dir=self.cwd, json_file_name=json_filename)
+        pass
+
 
 if __name__ == "__main__":
-
     benchmark = AIBenchmark(use_CPU=None, verbose_level=1)
     results = benchmark.run(precision="normal")
-

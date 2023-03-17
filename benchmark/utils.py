@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright 2019-2020 by Andrey Ignatov. All Rights Reserved.
 import gc
+import json
+import logging
 import sys
 
 import tensorflow as tf
@@ -523,17 +525,18 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
             config = tf.ConfigProto(device_count={'GPU': 0})
     else:
         config = None
-        # config = tf.compat.v1.ConfigProto()
-        # config.cpu_options.
+
     # idx = range(len(benchmark_tests))
     idx = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18]
+    # idx = [12]
+    json_filename = 'bench.json'
     for i in idx:
         test = benchmark_tests[i]
         try:
             t = threading.Thread(target=process_one_case, name=test.model,
                                  args=(benchmark_results, benchmark_tests, config, inference,
                                        iter_multiplier, micro, precision, public_results,
-                                       test, testInfo, training, verbose))
+                                       test, testInfo, training, verbose, json_filename))
             t.start()
             t.join()
             time.sleep(5)
@@ -552,8 +555,80 @@ def run_tests(training, inference, micro, verbose, use_CPU, precision, _type, st
     return public_results
 
 
+def run_a_single_tests(training, inference, micro, verbose, use_CPU, precision, _type, start_dir,
+                       test_case_id, json_file_name):
+    testInfo = TestInfo(_type, precision, use_CPU, verbose)
+
+    if verbose > 0:
+        printTestInfo(testInfo)
+        printTestStart()
+
+    benchmark_tests = TestConstructor().getTests()
+    # benchmark_results = BenchmarkResults()
+    # public_results = PublicResults()
+    os.chdir(path.dirname(__file__))
+
+    iter_multiplier = 1
+    if precision == "high":
+        iter_multiplier = 10
+
+    if use_CPU:
+        if testInfo.tf_ver_2:
+            config = tf.compat.v1.ConfigProto(device_count={'GPU': 0})
+        else:
+            config = tf.ConfigProto(device_count={'GPU': 0})
+    else:
+        config = None
+
+    test = benchmark_tests[test_case_id]
+    try:
+        # process_one_case(benchmark_results, benchmark_tests, config, inference,
+        #                  iter_multiplier, micro, precision, public_results,
+        #                  test, testInfo, training, verbose, json_file_name)
+
+        process_one_case_multi_thread(benchmark_tests, config, inference, iter_multiplier, micro,
+                                      precision, test, testInfo, training, verbose, json_file_name)
+
+    except:
+        print("error on {}/{}. {}".format(test.id, len(benchmark_tests), test.model))
+
+    os.chdir(start_dir)
+
+
+def get_score_from_json(_type, precision, use_CPU, verbose, start_dir, json_file_name):
+    testInfo = TestInfo(_type, precision, use_CPU, verbose)
+    benchmark_results = BenchmarkResults()
+    public_results = PublicResults()
+
+    if json_file_name is not None and os.path.exists(json_file_name):
+        with open(json_file_name) as f:
+            result_list = json.load(f)
+
+    for item in result_list:
+        public_id = item['public_id']
+        time_mean = item['time_mean']
+        time_std = item['time_std']
+        ref_time = item['ref_time']
+        public_results.test_results[public_id] = Result(time_mean, time_std)
+        if item['type'] == 'inference':
+            benchmark_results.results_inference.append(time_mean)
+            benchmark_results.results_inference_norm.append(float(ref_time) / time_mean)
+        elif item['type'] == 'training':
+            benchmark_results.results_training.append(time_mean)
+            benchmark_results.results_training_norm.append(float(ref_time) / time_mean)
+            pass
+        else:
+            raise RuntimeError("unknown type when walk to {}".format(item))
+
+    testInfo.results = benchmark_results
+    public_results = printScores(testInfo, public_results)
+    os.chdir(start_dir)
+    return public_results
+
+
 def process_one_case(benchmark_results, benchmark_tests, config, inference, iter_multiplier, micro, precision,
-                     public_results, test, testInfo, training, verbose):
+                     public_results, test, testInfo, training, verbose,
+                     json_file_name=None):
     """
     benchmark_results : [i/o]
     benchmark_tests   : [i]
@@ -573,6 +648,9 @@ def process_one_case(benchmark_results, benchmark_tests, config, inference, iter
     sub_id = 1
     tf.compat.v1.reset_default_graph() if testInfo.tf_ver_2 else tf.reset_default_graph()
     session = tf.compat.v1.Session(config=config) if testInfo.tf_ver_2 else tf.Session(config=config)
+
+    result_bank = []
+
     with tf.Graph().as_default(), session as sess:
 
         input_, output_, train_vars_ = getModelSrc(test, testInfo, sess)
@@ -616,6 +694,11 @@ def process_one_case(benchmark_results, benchmark_tests, config, inference, iter
 
                 benchmark_results.results_inference.append(time_mean)
                 benchmark_results.results_inference_norm.append(float(subTest.ref_time) / time_mean)
+
+                result_bank.append({'public_id': public_id,
+                                    'type': 'inference',
+                                    'time_mean': time_mean,
+                                    'time_std': time_std, 'ref_time': float(subTest.ref_time)})
 
                 if verbose > 0:
                     prefix = "%d.%d - inference" % (test.id, sub_id)
@@ -673,10 +756,165 @@ def process_one_case(benchmark_results, benchmark_tests, config, inference, iter
                 benchmark_results.results_training.append(time_mean)
                 benchmark_results.results_training_norm.append(float(subTest.ref_time) / time_mean)
 
+                result_bank.append({'public_id': public_id,
+                                    'type': 'training',
+                                    'time_mean': time_mean,
+                                    'time_std': time_std, 'ref_time': float(subTest.ref_time)})
                 if verbose > 0:
                     prefix = "%d.%d - training " % (test.id, sub_id)
                     printTestResults(prefix, subTest.batch_size, subTest.getInputDims(), time_mean, time_std, verbose)
                     sub_id += 1
+
+    if json_file_name is not None:
+        if os.path.exists(json_file_name):
+            with open(json_file_name) as f:
+                exists_data = json.load(f)
+            new_data = exists_data + result_bank
+            json_obj = json.dumps(new_data)
+        else:
+            json_obj = json.dumps(result_bank)
+
+        with open(json_file_name, "w") as f:
+            f.write(json_obj)
+        pass
+
     sess.close()
     del sess
     gc.collect()
+
+
+def process_one_case_multi_thread(benchmark_tests, config, inference, iter_multiplier, micro,
+                                  precision, test, testInfo, training, verbose, json_file_name=None):
+
+    if verbose > 0 and not (micro and len(test.micro) == 0):
+        print("\n" + str(test.id) + "/" + str(len(benchmark_tests)) + ". " + test.model + "\n")
+    sub_id = 1
+    tf.compat.v1.reset_default_graph() if testInfo.tf_ver_2 else tf.reset_default_graph()
+    session = tf.compat.v1.Session(config=config) if testInfo.tf_ver_2 else tf.Session(config=config)
+
+    result_bank = []
+
+    with tf.Graph().as_default(), session as sess:
+        input_, output_, train_vars_ = getModelSrc(test, testInfo, sess)
+
+        if testInfo.tf_ver_2:
+            tf.compat.v1.global_variables_initializer().run()
+            if test.type == "nlp-text":
+                sess.run(tf.compat.v1.tables_initializer())
+        else:
+            tf.global_variables_initializer().run()
+            if test.type == "nlp-text":
+                sess.run(tf.tables_initializer())
+
+        if inference or micro:
+
+            for subTest in (test.inference if inference else test.micro):
+
+                time_test_started = getTimeSeconds()
+                inference_times = []
+
+                for i in range(subTest.iterations * iter_multiplier):
+
+                    if getTimeSeconds() - time_test_started < subTest.max_duration \
+                            or (i < subTest.min_passes and getTimeSeconds() - time_test_started < MAX_TEST_DURATION) \
+                            or precision == "high":
+
+                        data = loadData(test.type, subTest.getInputDims())
+                        time_iter_started = getTimeMillis()
+                        sess.run(output_, feed_dict={input_: data})
+                        inference_time = getTimeMillis() - time_iter_started
+                        inference_times.append(inference_time)
+                        del data
+                        gc.collect()
+                        if verbose > 1:
+                            print("Inference Time: " + str(inference_time) + " ms")
+
+                time_mean, time_std = computeStats(inference_times)
+
+                public_id = "%d.%d" % (test.id, sub_id)
+                # public_results.test_results[public_id] = Result(time_mean, time_std)
+                # benchmark_results.results_inference.append(time_mean)
+                # benchmark_results.results_inference_norm.append(float(subTest.ref_time) / time_mean)
+
+                result_bank.append({'public_id': public_id,
+                                    'type': 'inference',
+                                    'time_mean': time_mean,
+                                    'time_std': time_std, 'ref_time': float(subTest.ref_time)})
+
+                if verbose > 0:
+                    prefix = "%d.%d - inference" % (test.id, sub_id)
+                    printTestResults(prefix, subTest.batch_size, subTest.getInputDims(), time_mean, time_std, verbose)
+                    sub_id += 1
+
+        if training:
+
+            for subTest in test.training:
+
+                if train_vars_ is None:
+
+                    if testInfo.tf_ver_2:
+                        target_ = tf.compat.v1.placeholder(tf.float32, subTest.getOutputDims())
+                    else:
+                        target_ = tf.placeholder(tf.float32, subTest.getOutputDims())
+
+                    train_step = constructOptimizer(sess, output_, target_, subTest.loss_function,
+                                                    subTest.optimizer, subTest.learning_rate, testInfo.tf_ver_2)
+
+                else:
+
+                    target_ = train_vars_[0]
+                    train_step = train_vars_[1]
+
+                time_test_started = getTimeSeconds()
+                training_times = []
+
+                for i in range(subTest.iterations * iter_multiplier):
+
+                    if getTimeSeconds() - time_test_started < subTest.max_duration \
+                            or (i < subTest.min_passes and getTimeSeconds() - time_test_started < MAX_TEST_DURATION) \
+                            or precision == "high":
+
+                        data = loadData(test.type, subTest.getInputDims())
+                        target = loadTargets(test.type, subTest.getOutputDims())
+
+                        time_iter_started = getTimeMillis()
+                        sess.run(train_step, feed_dict={input_: data, target_: target})
+                        training_time = getTimeMillis() - time_iter_started
+                        training_times.append(training_time)
+
+                        del data
+                        if verbose > 1:
+                            if i == 0 and inference:
+                                print("\nTraining Time: " + str(training_time) + " ms")
+                            else:
+                                print("Training Time: " + str(training_time) + " ms")
+
+                time_mean, time_std = computeStats(training_times)
+
+                public_id = "%d.%d" % (test.id, sub_id)
+                # public_results.test_results[public_id] = Result(time_mean, time_std)
+
+                # benchmark_results.results_training.append(time_mean)
+                # benchmark_results.results_training_norm.append(float(subTest.ref_time) / time_mean)
+
+                result_bank.append({'public_id': public_id,
+                                    'type': 'training',
+                                    'time_mean': time_mean,
+                                    'time_std': time_std, 'ref_time': float(subTest.ref_time)})
+                if verbose > 0:
+                    prefix = "%d.%d - training " % (test.id, sub_id)
+                    printTestResults(prefix, subTest.batch_size, subTest.getInputDims(), time_mean, time_std, verbose)
+                    sub_id += 1
+
+    if json_file_name is not None:
+        if os.path.exists(json_file_name):
+            with open(json_file_name) as f:
+                exists_data = json.load(f)
+            new_data = exists_data + result_bank
+            json_obj = json.dumps(new_data)
+        else:
+            json_obj = json.dumps(result_bank)
+
+        with open(json_file_name, "w") as f:
+            f.write(json_obj)
+        pass
