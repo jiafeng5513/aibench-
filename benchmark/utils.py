@@ -603,6 +603,8 @@ def get_score_from_json(_type, precision, use_CPU, verbose, start_dir, json_file
     if json_file_name is not None and os.path.exists(json_file_name):
         with open(json_file_name) as f:
             result_list = json.load(f)
+    else:
+        raise RuntimeError("{} is not exist!".format(json_file_name))
 
     for item in result_list:
         public_id = item['public_id']
