@@ -22,6 +22,29 @@ enable openvino for ai-benchmark base on intel dGPU and iGPU.
 6. memory_profiler==0.61.0
 7. matplotlib==3.7.1
 
+
+## models
+●  Section 1: MobileNet-V2,  Classification,  [paper]
+●  Section 2: Inception-V3,  Classification,  [paper]
+●  Section 3: Inception-V4,  Classification,  [paper]
+●  Section 4: Inception-ResNet-V2,  Classification,  [paper]
+●  Section 5: ResNet-V2-50,  Classification,  [paper]
+●  Section 6: ResNet-V2-152,  Classification,  [paper]
+●  Section 7: VGG-16,  Classification,  [paper]
+●  Section 8: SRCNN 9-5-5,  Image-to-Image Mapping,  [paper]
+●  Section 9: VGG-19,  Image-to-Image Mapping,  [paper]
+●  Section 10: ResNet-SRGAN,  Image-to-Image Mapping,  [paper]
+●  Section 11: ResNet-DPED,  Image-to-Image Mapping,  [paper]
+●  Section 12: U-Net,  Image-to-Image Mapping,  [paper]
+●  Section 13: Nvidia-SPADE,  Image-to-Image Mapping,  [paper]
+●  Section 14: ICNet,  Image Segmentation,  [paper]
+●  Section 15: PSPNet,  Image Segmentation,  [paper]
+●  Section 16: DeepLab,  Image Segmentation,  [paper]
+●  Section 17: Pixel-RNN,  Image Inpainting,  [paper]
+●  Section 18: LSTM,  Sentence Sentiment Analysis,  [paper]
+●  Section 19: GNMT,  Text Translation,  [paper]
+
+
 ## env setup (for oneAPI)
 1. [install itex for arc GPU](https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/experimental/install_for_arc_gpu.md)
 
